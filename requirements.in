@@ -1,0 +1,11 @@
+numpy
+pandas
+scikit-learn
+joblib
+matplotlib
+requests
+kaggle
+pytest
+black
+isort
+mlflow
