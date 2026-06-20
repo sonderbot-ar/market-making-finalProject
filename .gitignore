@@ -6,6 +6,9 @@ __pycache__/
 # C extensions
 *.so
 
+# do not push the datasets in the repo
+.csv
+
 # Distribution / packaging
 .Python
 build/
@@ -45,6 +48,7 @@ htmlcov/
 .cache
 nosetests.xml
 coverage.xml
+copy.py
 *.cover
 *.py.cover
 .hypothesis/
