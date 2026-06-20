@@ -1,6 +1,3 @@
-<<<<<<< Updated upstream
-# market-making-finalProject
-=======
 # market-making-finalProject
 ## Market-Making 
 ### Backtesting Framework 
@@ -50,8 +47,3 @@ Latest results were:
  Final PnL       : $105667.60
  Sharpe Ratio    : 21.65
 ==============================
-
-
-
-
->>>>>>> Stashed changes

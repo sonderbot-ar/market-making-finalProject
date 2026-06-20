@@ -1,0 +1,40 @@
+name: Continuous Integration
+
+on:
+  pull_request:
+    branches:
+    - main
+
+jobs:
+  build-and-test:
+    runs_on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install pip-tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install pip-tools
+
+      - name: Dependency Guardrail Check
+        run: |
+          # the .in file is compiled to see what the requirements.txt file SHOULD look like.
+          pip-compile requirements.in  
+          # If there is a difference between the generated .txt file and the commited .txt, it will fail.
+          git diff --exit-code requirements.txt || (echo "Dependency drift! Don't forget to run 'pip-compile requirements.in' locally. Compile and then commit the updated 'requirements.txt' file." && exit 1)
+
+      - name: Sync Environment
+        run: |
+          pip-sync requirements.txt
+      
+      - name: Run Pytest
+        run: |
+          pytest tests/ -v
