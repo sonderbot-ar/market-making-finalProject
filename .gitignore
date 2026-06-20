@@ -6,8 +6,9 @@ __pycache__/
 # C extensions
 *.so
 
-# do not push the datasets in the repo
-.csv
+
+*.csv
+*copy*.py
 
 # Distribution / packaging
 .Python
