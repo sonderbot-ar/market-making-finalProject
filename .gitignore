@@ -49,7 +49,7 @@ htmlcov/
 .cache
 nosetests.xml
 coverage.xml
-copy.py
+copy.py # not needed, proper syntax is *copy*.py
 *.cover
 *.py.cover
 .hypothesis/
