@@ -2,6 +2,8 @@ import os
 import kaggle
 import pandas as pd
 
+from src.config import RAW_DATA_DIR
+
 # How to use: just change the start and end dates according to necessity
 # Plan:
 # Training 1 - 2024-06-14 Post-ETF stable liquidity, ideal “clean market making environment”
@@ -13,11 +15,16 @@ import pandas as pd
 # Test 2 - 2025-07-10 Tests robustness under tight spreads + sudden moves
 
 DATASET_SLUG = "mczielinski/bitcoin-historical-data"
-DOWNLOAD_DIR = "data"
+DOWNLOAD_DIR = RAW_DATA_DIR
 start = "2025-07-10"
 end = "2025-07-11"
 
-os.makedirs(DOWNLOAD_DIR, exist_ok=True)
+# os.makedirs(DOWNLOAD_DIR, exist_ok=True)
+
+RAW_DATA_DIR.mkdir(
+    parents=True,
+    exist_ok=True
+)
 
 print("Downloading dataset...")
 kaggle.api.dataset_download_files(
@@ -26,8 +33,8 @@ kaggle.api.dataset_download_files(
     unzip=True
 )
 
-input_file = os.path.join(
-    DOWNLOAD_DIR,
+input_file = (
+    RAW_DATA_DIR /
     "btcusd_1-min_data.csv"
 )
 
@@ -45,8 +52,8 @@ target_date = df[
     & (df["Datetime"] < end)
 ]
 
-output_file = os.path.join(
-    DOWNLOAD_DIR,
+output_file = (
+    RAW_DATA_DIR /
     f"BTCUSD_Bitstamp_1min_{start}.csv"
 )
 
