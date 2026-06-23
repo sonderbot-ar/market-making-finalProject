@@ -25,6 +25,11 @@ jobs:
           pip install pip-tools
           pip-sync requirements.txt
 
+      - name: Generate Processed Features
+        run: |
+          # Execute the preprocessor to convert raw data into the Avellaneda-Stoikov features
+          python -m src.data.data_preprocessor
+
       - name: Execute Backtest & Train Strategy
         env:
           # SET URI HERE!!!!
