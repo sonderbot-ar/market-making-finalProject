@@ -12,7 +12,8 @@ def generate_dummy_data():
     
     files_to_generate = [
         "train-BTCUSD_Bitstamp_1min_2024-06-14.csv",
-        "val-BTCUSD_Bitstamp_1min_2025-02-20.csv"
+        "val-BTCUSD_Bitstamp_1min_2025-02-20.csv",
+        "test-BTCUSD_Bitstamp_1min_2025-06-12.csv"
     ]
     
     for filename in files_to_generate:
