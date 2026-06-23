@@ -24,6 +24,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install pip-tools
           pip-sync requirements.txt
+      
+      - name: Generate Dummy Data Fixture
+        run: |
+          # The runner creates its own temporary raw data
+          python tests/generate_fixture.py
 
       - name: Generate Processed Features
         run: |
