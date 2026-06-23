@@ -13,3 +13,4 @@ xgboost
 gunicorn
 fastapi
 starlette
+pytest
