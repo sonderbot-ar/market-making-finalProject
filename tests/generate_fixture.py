@@ -4,7 +4,7 @@ from pathlib import Path
 
 def generate_dummy_data():
     """
-    Generates synthetic market data fixtures for the CI/CD pipeline.
+    Generates synthetic OHLCV market data fixtures for the CI/CD pipeline.
     Saves them to the data/raw/ directory to simulate real inputs.
     """
     target_dir = Path("data/raw")
@@ -18,15 +18,17 @@ def generate_dummy_data():
     
     for filename in files_to_generate:
         df = pd.DataFrame({
-            'Datetime': pd.date_range(start='2024-01-01', periods=100, freq='1min'),
-            'High': np.random.uniform(101, 105, 100),
-            'Low': np.random.uniform(95, 99, 100),
-            'Close': np.random.uniform(99, 101, 100)
+            'Datetime': pd.date_range(start='2024-01-01', periods=250, freq='1min'),
+            'Open': np.random.uniform(99, 101, 250),
+            'High': np.random.uniform(101, 105, 250),
+            'Low': np.random.uniform(95, 99, 250),
+            'Close': np.random.uniform(99, 101, 250),
+            'Volume': np.random.uniform(10, 1000, 250)
         })
         
         target_file = target_dir / filename
         df.to_csv(target_file, index=False)
-        print(f"Dummy data successfully generated at: {target_file}")
+        print(f"✅ Dummy data successfully generated at: {target_file}")
 
 if __name__ == "__main__":
     generate_dummy_data()
