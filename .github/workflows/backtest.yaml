@@ -35,7 +35,7 @@ jobs:
           
           # Execute the main engine. 
           # (src/main.py should contain the logic to save the final model to models/)
-          python src/main.py
+          python -m src.main
 
       - name: Archive Model Artifacts
         uses: actions/upload-artifact@v4
