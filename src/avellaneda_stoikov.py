@@ -10,6 +10,13 @@ from src.config import (
     RESULTS_DIR
 )
 
+def ensure_mid_price(df):
+    df = df.copy()
+
+    if "mid_price" not in df.columns:
+        df["mid_price"] = (df["High"] + df["Low"]) / 2
+
+    return df
 
 class AvellanedaStoikov:
 
@@ -128,10 +135,10 @@ def main():
     #VAL_FILE = "src/data/val-BTCUSD_Bitstamp_1min_2025-02-20_processed(AS).csv"
     #TEST_FILE = "src/data/test-BTCUSD_Bitstamp_1min_2025-06-12_processed(AS).csv"
 
-    train_df = pd.read_csv(TRAIN_FILE)
-    val_df = pd.read_csv(VAL_FILE)
-    test_df = pd.read_csv(TEST_FILE)
-
+    train_df = ensure_mid_price(pd.read_csv(TRAIN_FILE))
+    val_df = ensure_mid_price(pd.read_csv(VAL_FILE))
+    test_df = ensure_mid_price(pd.read_csv(TEST_FILE))
+    
     # simple parameter estimation
     sigma = train_df["mid_price"].pct_change().std()
     kappa = 1 / (train_df["mid_price"].diff().abs().mean() + 1e-9)

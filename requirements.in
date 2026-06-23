@@ -9,7 +9,7 @@ pytest
 black
 isort
 mlflow
-
 xgboost
-sklearn.metrics
-kaggle
+gunicorn
+fastapi
+starlette

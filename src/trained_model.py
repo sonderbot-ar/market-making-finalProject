@@ -7,6 +7,8 @@ from sklearn.metrics import (
     mean_squared_error,
     r2_score
 )
+import mlflow
+import mlflow.xgboost
 
 from src.config import (
     PROCESSED_DATA_DIR,
@@ -39,6 +41,13 @@ FEATURES = [
     "mid_price"
 ]
 
+def ensure_mid_price(df):
+    df = df.copy()
+
+    if "mid_price" not in df.columns:
+        df["mid_price"] = (df["High"] + df["Low"]) / 2
+
+    return df
 
 def create_features(df):
 
@@ -136,6 +145,13 @@ def evaluate(
     print(f"RMSE = {rmse:.8f}")
     print(f"R²   = {r2:.8f}")
 
+    return {
+        f"{name.lower()}_mae": mae,
+        f"{name.lower()}_mse": mse,
+        f"{name.lower()}_rmse": rmse,
+        f"{name.lower()}_r2": r2
+    }
+
 def reconstruct_and_quote(df, preds, half_spread=10.0):
     # Convert predicted difference back into a raw price
     predicted_mid = df["mid_price"] + preds
@@ -173,88 +189,139 @@ def save_predictions(
 
 def main():
 
-    train_df = pd.read_csv(
-        TRAIN_FILE
-    )
+    mlflow.set_experiment("market-making-xgboost")
 
-    val_df = pd.read_csv(
-        VAL_FILE
-    )
+    with mlflow.start_run() as run:
 
-    test_df = pd.read_csv(
-        TEST_FILE
-    )
+        train_df = ensure_mid_price(
+        pd.read_csv(TRAIN_FILE)
+        )
 
-    X_train, y_train, train_clean = (
-        prepare(train_df)
-    )
+        val_df = ensure_mid_price(
+        pd.read_csv(VAL_FILE)
+        )
 
-    X_val, y_val, val_clean = (
-        prepare(val_df)
-    )
+        test_df = ensure_mid_price(
+        pd.read_csv(TEST_FILE)
+        )
 
-    X_test, y_test, test_clean = (
-        prepare(test_df)
-    )
+        X_train, y_train, train_clean = (
+            prepare(train_df)
+        )
 
-    model = XGBRegressor(
-        n_estimators=500,
-        max_depth=6,
-        learning_rate=0.03,
-        subsample=0.8,
-        colsample_bytree=0.8,
-        random_state=42
-    )
+        X_val, y_val, val_clean = (
+            prepare(val_df)
+        )
 
-    model.fit(
-        X_train,
-        y_train
-    )
+        X_test, y_test, test_clean = (
+            prepare(test_df)
+        )
 
-    joblib.dump(
-        model,
-        MODELS_DIR / "xgb_model.pkl"
-    )
+        model = XGBRegressor(
+            n_estimators=500,
+            max_depth=6,
+            learning_rate=0.03,
+            subsample=0.8,
+            colsample_bytree=0.8,
+            random_state=42
+        )
 
-    # Predict the price difference
-    val_pred_diff = model.predict(X_val)
-    test_pred_diff = model.predict(X_test)
+        mlflow.log_param("model_type", "XGBRegressor")
+        mlflow.log_param("n_estimators", 500)
+        mlflow.log_param("max_depth", 6)
+        mlflow.log_param("learning_rate", 0.03)
+        mlflow.log_param("subsample", 0.8)
+        mlflow.log_param("colsample_bytree", 0.8)
+        mlflow.log_param("random_state", 42)
 
-    # Reconstruct prices and generate bid/ask
-    val_pred_mid, val_bid, val_ask = reconstruct_and_quote(val_clean, val_pred_diff)
-    test_pred_mid, test_bid, test_ask = reconstruct_and_quote(test_clean, test_pred_diff)
+        model.fit(
+            X_train,
+            y_train
+        )
 
-    # Reconstruct actual next mid prices for metric evaluation
-    val_actual_mid = val_clean["mid_price"] + y_val
-    test_actual_mid = test_clean["mid_price"] + y_test
+        MODELS_DIR.mkdir(
+            parents=True,
+            exist_ok=True
+        )
 
-    evaluate(
-        val_actual_mid,
-        val_pred_mid,
-        "Validation"
-    )
+        RESULTS_DIR.mkdir(
+            parents=True,
+            exist_ok=True
+        )
 
-    evaluate(
-        test_actual_mid,
-        test_pred_mid,
-        "Test"
-    )
+        joblib.dump(
+            model,
+            MODELS_DIR / "xgb_model.pkl"
+        )
 
-    save_predictions(
-        val_clean,
-        val_pred_mid,
-        val_bid,
-        val_ask,
-        RESULTS_DIR / "xgb_validation_predictions.csv"
-    )
+        val_pred_diff = model.predict(X_val)
+        test_pred_diff = model.predict(X_test)
 
-    save_predictions(
-        test_clean,
-        test_pred_mid,
-        test_bid,
-        test_ask,
-        RESULTS_DIR / "xgb_test_predictions.csv"
-    )
+        val_pred_mid, val_bid, val_ask = reconstruct_and_quote(
+            val_clean,
+            val_pred_diff
+        )
+
+        test_pred_mid, test_bid, test_ask = reconstruct_and_quote(
+            test_clean,
+            test_pred_diff
+        )
+
+        val_actual_mid = val_clean["mid_price"] + y_val
+        test_actual_mid = test_clean["mid_price"] + y_test
+
+        val_metrics = evaluate(
+            val_actual_mid,
+            val_pred_mid,
+            "Validation"
+        )
+
+        test_metrics = evaluate(
+            test_actual_mid,
+            test_pred_mid,
+            "Test"
+        )
+
+        mlflow.log_metrics(val_metrics)
+        mlflow.log_metrics(test_metrics)
+
+        validation_predictions_path = (
+            RESULTS_DIR / "xgb_validation_predictions.csv"
+        )
+
+        test_predictions_path = (
+            RESULTS_DIR / "xgb_test_predictions.csv"
+        )
+
+        save_predictions(
+            val_clean,
+            val_pred_mid,
+            val_bid,
+            val_ask,
+            validation_predictions_path
+        )
+
+        save_predictions(
+            test_clean,
+            test_pred_mid,
+            test_bid,
+            test_ask,
+            test_predictions_path
+        )
+
+        mlflow.log_artifact(str(validation_predictions_path))
+        mlflow.log_artifact(str(test_predictions_path))
+        mlflow.log_artifact(str(MODELS_DIR / "xgb_model.pkl"))
+
+        mlflow.xgboost.log_model(
+            xgb_model=model,
+            artifact_path="model",
+            input_example=X_train.head(1)
+        )
+
+        print("\nMLflow run completed.")
+        print(f"Run ID: {run.info.run_id}")
+        print(f"Model URI: runs:/{run.info.run_id}/model")
 
 if __name__ == "__main__":
     main()
