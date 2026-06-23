@@ -18,6 +18,7 @@ def generate_dummy_data():
     
     for filename in files_to_generate:
         df = pd.DataFrame({
+            'Datetime': pd.date_range(start='2024-01-01', periods=100, freq='1min'),
             'High': np.random.uniform(101, 105, 100),
             'Low': np.random.uniform(95, 99, 100),
             'Close': np.random.uniform(99, 101, 100)
