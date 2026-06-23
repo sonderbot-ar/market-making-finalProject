@@ -11,5 +11,5 @@ isort
 mlflow
 xgboost
 gunicorn
-fastapi==0.115.12
-starlette==0.46.2
+fastapi
+starlette
