@@ -1,5 +1,5 @@
 import src.config
-from src.avellaneda_stoikov import main as run_avellaneda_stoikov
+from market_models.avellaneda_stoikov import main as run_avellaneda_stoikov
 from src.trained_model import main as run_xgboost_model
 from src.backtest_version1 import main as run_backtest
 

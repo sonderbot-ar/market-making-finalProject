@@ -14,3 +14,4 @@ gunicorn
 fastapi
 starlette
 pytest
+zstandard
