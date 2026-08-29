@@ -9,6 +9,6 @@ def inspect_praquet(file_path):
 
 
 if __name__ == '__main__':
-    file_path = "/Users/andresrodartee/market-making-finalProject/data/sample/BTCUSDT_2024-03-27_merged.parquet"
+    file_path = "/Users/andresrodartee/market-making-finalProject/data/BTCUSDT_2024-03-27_merged.parquet"
 
     inspect_praquet(file_path)
