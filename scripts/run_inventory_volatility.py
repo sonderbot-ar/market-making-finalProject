@@ -1,8 +1,7 @@
 from pathlib import Path
-import pandas as pd
-
 import sys
-from pathlib import Path
+
+import pandas as pd
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.append(str(PROJECT_ROOT))
@@ -28,14 +27,14 @@ def main():
     print("Running inventory + volatility market maker...")
 
     strategy = InventoryVolatilityMarketMaker(
-    base_spread_bps=0.0,
-    volatility_multiplier=50.0,
-    inventory_skew=500.0,
-    order_size=0.001,
-    max_inventory=0.005,
-    fee_rate=0.0002,
-    starting_cash=100_000.0,
-)
+        base_spread_bps=0.0,
+        volatility_multiplier=50.0,
+        inventory_skew=500.0,
+        order_size=0.001,
+        max_inventory=0.005,
+        fee_rate=0.0002,
+        starting_cash=100_000.0,
+    )
 
     results = strategy.run_backtest(data)
     summary = strategy.summary(results)

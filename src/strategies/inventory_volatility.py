@@ -129,24 +129,40 @@ class InventoryVolatilityMarketMaker:
         return pd.DataFrame(self.history)
 
     def summary(self, results: pd.DataFrame) -> dict:
-        final_value = results["portfolio_value"].iloc[-1]
-        final_pnl = final_value - self.starting_cash
+        final_cash = self.cash
+        final_mid_price = results["mid_price"].iloc[-1]
+        final_inventory_value = self.inventory * final_mid_price
+        final_portfolio_value = results["portfolio_value"].iloc[-1]
+        final_net_pnl = final_portfolio_value - self.starting_cash
 
         running_max = results["portfolio_value"].cummax()
         drawdown = results["portfolio_value"] - running_max
         max_drawdown = drawdown.min()
 
+        placed_bid_orders = results["placed_bid"].sum()
+        placed_ask_orders = results["placed_ask"].sum()
+        total_placed_orders = placed_bid_orders + placed_ask_orders
         total_fills = self.bid_fills + self.ask_fills
+        fill_rate = (
+            total_fills / total_placed_orders if total_placed_orders > 0 else 0
+        )
 
         return {
-            "final_portfolio_value": final_value,
-            "final_net_pnl": final_pnl,
+            "final_cash": final_cash,
+            "final_mid_price": final_mid_price,
+            "final_inventory_value": final_inventory_value,
+            "final_portfolio_value": final_portfolio_value,
+            "final_net_pnl": final_net_pnl,
             "fees_paid": self.fees_paid,
             "bid_fills": self.bid_fills,
             "ask_fills": self.ask_fills,
             "total_fills": total_fills,
+            "placed_bid_orders": placed_bid_orders,
+            "placed_ask_orders": placed_ask_orders,
+            "total_placed_orders": total_placed_orders,
+            "fill_rate": fill_rate,
             "ending_inventory": self.inventory,
-            "average_inventory": results["inventory"].abs().mean(),
+            "average_abs_inventory": results["inventory"].abs().mean(),
             "max_abs_inventory": results["inventory"].abs().max(),
             "max_drawdown": max_drawdown,
         }
