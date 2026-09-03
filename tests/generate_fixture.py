@@ -1,0 +1,34 @@
+import pandas as pd
+import numpy as np
+from pathlib import Path
+
+def generate_dummy_data():
+    """
+    Generates synthetic OHLCV market data fixtures for the CI/CD pipeline.
+    Saves them to the data/raw/ directory to simulate real inputs.
+    """
+    target_dir = Path("data/raw")
+    target_dir.mkdir(parents=True, exist_ok=True)
+    
+    files_to_generate = [
+        "train-BTCUSD_Bitstamp_1min_2024-06-14.csv",
+        "val-BTCUSD_Bitstamp_1min_2025-02-20.csv",
+        "test-BTCUSD_Bitstamp_1min_2025-06-12.csv"
+    ]
+    
+    for filename in files_to_generate:
+        df = pd.DataFrame({
+            'Datetime': pd.date_range(start='2024-01-01', periods=250, freq='1min'),
+            'Open': np.random.uniform(99, 101, 250),
+            'High': np.random.uniform(101, 105, 250),
+            'Low': np.random.uniform(95, 99, 250),
+            'Close': np.random.uniform(99, 101, 250),
+            'Volume': np.random.uniform(10, 1000, 250)
+        })
+        
+        target_file = target_dir / filename
+        df.to_csv(target_file, index=False)
+        print(f"✅ Dummy data successfully generated at: {target_file}")
+
+if __name__ == "__main__":
+    generate_dummy_data()

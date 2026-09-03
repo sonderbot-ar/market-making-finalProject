@@ -24,6 +24,16 @@ jobs:
           python -m pip install --upgrade pip
           pip install pip-tools
           pip-sync requirements.txt
+      
+      - name: Generate Dummy Data Fixture
+        run: |
+          # The runner creates its own temporary raw data
+          python tests/generate_fixture.py
+
+      - name: Generate Processed Features
+        run: |
+          # Execute the preprocessor to convert raw data into the Avellaneda-Stoikov features
+          python -m src.data.data_preprocessor
 
       - name: Execute Backtest & Train Strategy
         env:
@@ -35,7 +45,7 @@ jobs:
           
           # Execute the main engine. 
           # (src/main.py should contain the logic to save the final model to models/)
-          python src/main.py
+          python -m src.main
 
       - name: Archive Model Artifacts
         uses: actions/upload-artifact@v4
