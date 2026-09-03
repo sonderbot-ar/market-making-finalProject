@@ -88,6 +88,12 @@ ipython_config.py
 
 data/raw/
 data/processed/
+data/
+results/
+mlruns/
+models/
+.DS_Store
+**/.DS_Store
 *.zip
 *.csv
 *.parquet

@@ -6,7 +6,7 @@ import pandas as pd
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.append(str(PROJECT_ROOT))
 
-from src.strategies.inventory_volatility import InventoryVolatilityMarketMaker
+from src.inventory_volatility import InventoryVolatilityMarketMaker
 
 
 DATA_PATH = Path("data/processed/BTCUSDT_2024-03-27_merged.parquet")
@@ -57,6 +57,9 @@ def main():
     print("Loading data...")
     data = pd.read_parquet(DATA_PATH)
     data = data.head(50_000).copy()
+    sample_size = len(data)
+    start_timestamp = data["timestamp"].iloc[0]
+    end_timestamp = data["timestamp"].iloc[-1]
 
     summaries = []
 
@@ -73,15 +76,20 @@ def main():
         )
 
         results = strategy.run_backtest(data)
-        summary = strategy.summary(results)
-        summary.update(
-            {
-                "run_name": params["run_name"],
-                "volatility_multiplier": params["volatility_multiplier"],
-                "inventory_skew": params["inventory_skew"],
-                "max_inventory": params["max_inventory"],
-            }
-        )
+        strategy_summary = strategy.summary(results)
+        summary = {
+            "model_name": "inventory_volatility",
+            "model_version": "base",
+            "run_label": params["run_name"],
+            "sample_size": sample_size,
+            "start_timestamp": start_timestamp,
+            "end_timestamp": end_timestamp,
+            **strategy_summary,
+            "run_name": params["run_name"],
+            "volatility_multiplier": params["volatility_multiplier"],
+            "inventory_skew": params["inventory_skew"],
+            "max_inventory": params["max_inventory"],
+        }
         summaries.append(summary)
 
     grid_summary = pd.DataFrame(summaries).sort_values(
