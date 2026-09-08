@@ -46,6 +46,8 @@ databricks-sdk==0.118.0
     # via mlflow-skinny
 docker==7.1.0
     # via mlflow
+duckdb==1.5.5
+    # via -r requirements.in
 fastapi==0.115.12
     # via
     #   -r requirements.in
@@ -99,6 +101,8 @@ kaggle==1.7.4.5
     # via -r requirements.in
 kiwisolver==1.5.0
     # via matplotlib
+llvmlite==0.49.0
+    # via numba
 mako==1.3.12
     # via alembic
 markdown==3.10.2
@@ -113,21 +117,26 @@ matplotlib==3.10.9
     # via
     #   -r requirements.in
     #   mlflow
+    #   seaborn
 mlflow==2.22.0
     # via -r requirements.in
 mlflow-skinny==2.22.0
     # via mlflow
 mypy-extensions==1.1.0
     # via black
+numba==0.67.0
+    # via -r requirements.in
 numpy==1.26.4
     # via
     #   -r requirements.in
     #   contourpy
     #   matplotlib
     #   mlflow
+    #   numba
     #   pandas
     #   scikit-learn
     #   scipy
+    #   seaborn
     #   xgboost
 opentelemetry-api==1.42.1
     # via
@@ -149,6 +158,7 @@ pandas==2.2.3
     # via
     #   -r requirements.in
     #   mlflow
+    #   seaborn
 pathspec==1.1.1
     # via black
 pillow==12.2.0
@@ -208,6 +218,8 @@ scipy==1.17.1
     #   mlflow
     #   scikit-learn
     #   xgboost
+seaborn==0.13.2
+    # via -r requirements.in
 six==1.17.0
     # via
     #   kaggle
@@ -231,7 +243,9 @@ text-unidecode==1.3
 threadpoolctl==3.6.0
     # via scikit-learn
 tqdm==4.68.3
-    # via kaggle
+    # via
+    #   -r requirements.in
+    #   kaggle
 typing-extensions==4.15.0
     # via
     #   alembic

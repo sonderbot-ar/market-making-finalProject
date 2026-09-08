@@ -6,7 +6,7 @@ def run_delta_neutral_backtest(merged_parquet_path, output_csv_path):
     print("Loading master market state...")
     df = pd.read_parquet(merged_parquet_path)
     N = len(df)
-    
+
     # --- Engine Parameters ---
     gamma = 0.1         # Risk aversion parameter
     kappa = 1.5         # Order flow decay parameter
@@ -140,5 +140,4 @@ def run_delta_neutral_backtest(merged_parquet_path, output_csv_path):
     print(f"Successfully exported state space to {output_csv_path}")
 
 # --- TRIGGER LINE ---
-# Ensure you uncomment the line below and that the filenames match your local directory
 run_delta_neutral_backtest("/Users/andresrodartee/market-making-finalProject/data/raw/btcusdt_master_merged.parquet", "delta_neutral_v1.csv")

@@ -15,3 +15,7 @@ fastapi
 starlette
 pytest
 zstandard
+seaborn
+duckdb
+numba
+tqdm

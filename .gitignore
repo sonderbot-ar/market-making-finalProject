@@ -222,3 +222,6 @@ __marimo__/
 
 # ignore all .parquet files
 *.parquet
+
+# ignore all .txt.zst files
+*.txt.zst
