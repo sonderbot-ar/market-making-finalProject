@@ -23,6 +23,10 @@ def fast_vpin_hedge_loop(spot_bids, spot_asks, futures_bids, futures_asks,
     fees_paid = 0.0
     total_quotes = 0
     
+    # New: Define the BTC order size range
+    min_order_size = 0.005
+    max_order_size = 0.01
+    
     for i in range(n):
         mid = mids[i]
         sigma = sigmas[i] if not np.isnan(sigmas[i]) and sigmas[i] > 0 else 0.0001
@@ -45,56 +49,58 @@ def fast_vpin_hedge_loop(spot_bids, spot_asks, futures_bids, futures_asks,
 
         maker_fee_rate = 0.0000  # 0 bps for providing liquidity
         taker_fee_rate = fee_rate # 2 bps for crossing the spread to hedge
-        inventory_limit = hedge_threshold # Stop quoting if we reach the hedge threshold
 
-        # 3. Probabilistic Execution[cite: 3]
-        bid_filled = (np.random.random() < p_bid_fill) and (inventory < inventory_limit)
-        ask_filled = (np.random.random() < p_ask_fill) and (inventory > -inventory_limit)
+        # 3. Probabilistic Execution with Dynamic Sizing
+        bid_filled = (np.random.random() < p_bid_fill) and (inventory < hedge_threshold)
+        ask_filled = (np.random.random() < p_ask_fill) and (inventory > -hedge_threshold)
         
         if bid_filled:
-            inventory += 1
-            fee = bid_quote * maker_fee_rate  
-            cash -= (bid_quote + fee)
+            fill_size = np.random.uniform(min_order_size, max_order_size)
+            if inventory + fill_size > hedge_threshold:
+                fill_size = hedge_threshold - inventory
+                
+            inventory += fill_size
+            fee = bid_quote * fill_size * maker_fee_rate  
+            cash -= (bid_quote * fill_size) + fee
             fees_paid += fee
             bid_fills += 1
             total_fills += 1
             
         if ask_filled:
-            inventory -= 1
-            fee = ask_quote * maker_fee_rate  
-            cash += (ask_quote - fee)
+            fill_size = np.random.uniform(min_order_size, max_order_size)
+            if inventory - fill_size < -hedge_threshold:
+                fill_size = inventory + hedge_threshold
+                
+            inventory -= fill_size
+            fee = ask_quote * fill_size * maker_fee_rate  
+            cash += (ask_quote * fill_size) - fee
             fees_paid += fee
             ask_fills += 1
             total_fills += 1
 
-        # 4. Failsafe Taker Hedge[cite: 3]
-        # Upgraded to trigger on standard inventory OR toxic order flow (VPIN)
+        # 4. Failsafe Taker Hedge
         if inventory >= hedge_threshold or (inventory > 0 and vpin > vpin_threshold):
             fee = futures_bids[i] * inventory * taker_fee_rate
             cash += (futures_bids[i] * inventory) - fee
             fees_paid += fee
-            inventory = 0
+            inventory = 0.0
             
         elif inventory <= -hedge_threshold or (inventory < 0 and vpin > vpin_threshold):
             fee = futures_asks[i] * abs(inventory) * taker_fee_rate
             cash -= (futures_asks[i] * abs(inventory)) + fee
             fees_paid += fee
-            inventory = 0
+            inventory = 0.0
             
         # 5. Track State
         pnl_series[i] = (cash + (inventory * mid)) - starting_cash
         inv_series[i] = inventory
         
-    
     return pnl_series, inv_series, total_fills, bid_fills, ask_fills, fees_paid, total_quotes
 
 def simulate_vpin_hedge(df, params, fee_rate, starting_cash, starting_inv):
     """
     Wrapper function to plug this model seamlessly into the WFO Harness.
     """
-
-    # df = df.iloc[:1000].copy()  # For testing purposes, limit to first 1000 rows. Remove in production.
-
     num_cols = [
         'best_bid_spot', 'best_ask_spot', 
         'best_bid_futures', 'best_ask_futures', 
@@ -104,9 +110,6 @@ def simulate_vpin_hedge(df, params, fee_rate, starting_cash, starting_inv):
     # Backfill first, then fill remaining NaNs with 0.0
     df[num_cols] = df[num_cols].bfill().fillna(0.0)
     
-    # Extract arrays to feed into the Numba loop
-    spot_bids = df['best_bid_spot'].to_numpy()
-
     # Extract arrays to feed into the Numba loop
     spot_bids = df['best_bid_spot'].to_numpy(dtype=float)
     spot_asks = df['best_ask_spot'].to_numpy(dtype=float)
@@ -123,7 +126,6 @@ def simulate_vpin_hedge(df, params, fee_rate, starting_cash, starting_inv):
     hedge_threshold = float(params.get('hedge_threshold', 5.0))
     vpin_threshold = float(params.get('vpin_threshold', 0.8))
     
-
     pnl_series, inv_series, total_fills, bid_fills, ask_fills, fees_paid, total_quotes = fast_vpin_hedge_loop(
         spot_bids, spot_asks, futures_bids, futures_asks, mids, sigmas, vpins, 
         gamma, kappa, A, hedge_threshold, vpin_threshold, fee_rate, starting_cash, starting_inv

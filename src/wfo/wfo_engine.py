@@ -103,6 +103,15 @@ def run_wfo_experiment(
             starting_inv=0.0
         )
         test_metrics = calculate_window_metrics(test_pnl_arr, test_inv_arr, test_fills, initial_cash=current_cash)
+
+        test_mids = (df_test['best_bid_spot'] + df_test['best_ask_spot']) / 2.0
+        
+        window_return = float((test_mids.iloc[-1] - test_mids.iloc[0]) / test_mids.iloc[0]) if len(test_mids) > 0 else 0.0
+        market_spread_mean = float((df_test['best_ask_spot'] - df_test['best_bid_spot']).mean())
+        rolling_volatility_mean = float(df_test['rolling_volatility'].mean())
+        
+        # Pull trade volume if it exists (using the same column name as your V2 script)
+        trade_volume = float(df_test['trade_qty'].sum()) if 'trade_qty' in df_test.columns else 0.0
         
         window_pnl = test_metrics["final_net_pnl"]
         cumulative_oos_pnl += window_pnl
@@ -110,34 +119,26 @@ def run_wfo_experiment(
         
         # Build test window record
         record = {
+            "timestamp": str(window['test_start_datetime']),
+            "wfo_step": wfo_step,
             "model_name": model_name,
             "model_version": model_version,
-            "wfo_step": wfo_step,
             "train_start_datetime": str(window['train_start_datetime']),
             "train_end_datetime": str(window['train_end_datetime']),
             "test_start_datetime": str(window['test_start_datetime']),
             "test_end_datetime": str(window['test_end_datetime']),
-            "train_rows": window['train_rows'],
-            "test_rows": window['test_rows'],
-            "selected_parameters": json.dumps(best_params),
-            "train_final_net_pnl": best_train_metrics["final_net_pnl"],
-            "train_max_drawdown": best_train_metrics["max_drawdown"],
-            "train_total_fills": best_train_metrics["total_fills"],
-            "train_average_abs_inventory": best_train_metrics["avg_abs_inventory"],
-            "train_risk_adjusted_score": best_train_metrics["risk_adjusted_score"],
-            "test_final_net_pnl": cumulative_oos_pnl,
             "test_window_pnl": window_pnl,
             "test_max_drawdown": test_metrics["max_drawdown"],
             "test_fees_paid": test_metrics["fees_paid"],
             "test_total_fills": test_metrics["total_fills"],
-            "test_bid_fills": test_metrics["bid_fills"],
-            "test_ask_fills": test_metrics["ask_fills"],
             "test_average_abs_inventory": test_metrics["avg_abs_inventory"],
-            "test_max_abs_inventory": test_metrics["max_abs_inventory"],
-            "test_ending_inventory": test_metrics["ending_inventory"],
-            "test_fill_rate": test_metrics["fill_rate"],
-            "test_final_portfolio_value": test_metrics["final_portfolio_value"],
-            "test_risk_adjusted_score": test_metrics["risk_adjusted_score"]
+            "test_risk_adjusted_score": test_metrics["risk_adjusted_score"],
+            "selected_parameters": json.dumps(best_params),
+            "rolling_volatility_mean": rolling_volatility_mean,
+            "market_spread_mean": market_spread_mean,
+            "window_return": window_return,
+            "trade_volume": trade_volume,
+            "final_inventory": test_metrics["ending_inventory"]
         }
         wfo_records.append(record)
         print(f"Step {wfo_step} complete. Window PnL: ${window_pnl:,.2f} | Score: {test_metrics['risk_adjusted_score']:.2f}")
@@ -164,7 +165,10 @@ def generate_aggregate_summary(results_df):
     return {
         "number_of_wfo_test_windows": total_windows,
         "total_out_of_sample_pnl": float(results_df['test_window_pnl'].sum()),
-        "final_portfolio_value": float(results_df['test_final_portfolio_value'].iloc[-1]),
+        
+        # FIX 1: Calculate the final value using your Starting Cash (100,000) + Total PnL
+        "final_portfolio_value": 100000.0 + float(results_df['test_window_pnl'].sum()),
+        
         "worst_test_window_drawdown": float(results_df['test_max_drawdown'].min()),
         "average_test_window_drawdown": float(results_df['test_max_drawdown'].mean()),
         "total_fees": float(results_df['test_fees_paid'].sum()),
@@ -173,6 +177,9 @@ def generate_aggregate_summary(results_df):
         "average_risk_adjusted_score": float(results_df['test_risk_adjusted_score'].mean()),
         "positive_test_windows": positive_windows,
         "positive_window_percentage": float((positive_windows / total_windows) * 100) if total_windows > 0 else 0.0,
-        "final_ending_inventory": float(results_df['test_ending_inventory'].iloc[-1]),
+        
+        # FIX 2: Point to the new PPO column name 'final_inventory'
+        "final_ending_inventory": float(results_df['final_inventory'].iloc[-1]),
+        
         "most_frequently_selected_parameters": most_frequent_params
     }

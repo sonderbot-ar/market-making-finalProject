@@ -12,10 +12,10 @@ def main():
     
     # 1. Define the M5-powered grid
     m5_param_grid = {
-        'gamma': [0.01, 0.05],
-        'kappa': [1.0],
+        'gamma': [1.0, 3.5, 5.0],
+        'kappa': [0.5, 1.0, 1.5],
         'A': [1.0],
-        'hedge_threshold': [15],
+        'hedge_threshold': [0.075, 0.15, 0.25],
         'vpin_threshold': [0.6, 0.7, 0.8, 0.9]
     }
     
