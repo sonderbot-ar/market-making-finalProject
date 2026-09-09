@@ -12,16 +12,16 @@ def main():
     
     # 1. Define the M5-powered grid
     m5_param_grid = {
-        'gamma': [0.01, 0.05, 0.1, 0.2],
-        'kappa': [1.0, 1.5, 2.0],
+        'gamma': [0.01, 0.05],
+        'kappa': [1.0],
         'A': [1.0],
-        'hedge_threshold': [3, 5, 10, 15],
+        'hedge_threshold': [15],
         'vpin_threshold': [0.6, 0.7, 0.8, 0.9]
     }
     
     # 2. Execute the Walk-Forward Optimization
     results_df, aggregate_summary = run_wfo_experiment(
-        parquet_path="/Users/andresrodartee/market-making-finalProject/data/data/merged/master_wfo_final.parquet",
+        parquet_path="/Users/andresrodartee/market-making-finalProject/data/data/merged/btcusdt_ppo_aligned.parquet",
         model_name="VPIN_Delta_Hedge",
         model_version="v2.0",
         model_simulation_func=simulate_vpin_hedge,
@@ -31,7 +31,7 @@ def main():
     )
     
     # 3. Save and display the results
-    results_df.to_csv("/Users/andresrodartee/market-making-finalProject/results/wfo_vpin_results.csv", index=False)
+    results_df.to_csv("/Users/andresrodartee/market-making-finalProject/results/new_wfo_vpin_results.csv", index=False)
     
     print("\n" + "="*50)
     print("WFO AGGREGATE SUMMARY")
